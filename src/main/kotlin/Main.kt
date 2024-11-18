@@ -1,6 +1,7 @@
 
 
 import java.io.File
+import java.text.Normalizer
 
 enum class Category { ROUPA, ELETRONICO, COLECIONAVEL }
 
@@ -71,6 +72,12 @@ class Collectible (
     }
 }
 
+fun removeAccents(input: String): String {
+    return Normalizer.normalize(input, Normalizer.Form.NFD)
+        .replace("[^\\p{ASCII}]".toRegex(), "") // Remove caracteres não ASCII (acentos)
+}
+
+
 fun main(args: Array<String>) {
     if (args.isEmpty()) {
         println("Por favor, forneça o caminho do arquivo CSV como argumento.")
@@ -112,30 +119,30 @@ fun main(args: Array<String>) {
     csvBuyFile.readLines().drop(1).forEach { line ->
         val it = line.split(",")
 
-        val code = it[0]
+        val code = removeAccents(it[0]).uppercase()
         val quantity = it[1].toInt()
-        val name = it[2]
+        val name = removeAccents(it[2]).uppercase()
         val costPrice = it[3].toDouble()
         val salePrice = it[4].toDouble()
-        val category = it[5]
-        val type = it[6]
+        val category = removeAccents(it[5]).uppercase()
+        val type = removeAccents(it[6]).uppercase()
         val size = it[7] as String?
-        val primaryColor = it[8] as String?
-        val secundaryColor = it[9] as String?
-        val version = it[10] as String?
-        val fabricationYear = it[11] as String?
-        val fabricationMaterial = it[12] as String?
-        val relevance = it[13] as String?
+        val primaryColor = it[8]?.let { removeAccents(it).uppercase() }
+        val secundaryColor = it[9]?.let { removeAccents(it).uppercase() }
+        val version = it[10]?.let { removeAccents(it).uppercase() }
+        val fabricationYear = it[11]?.let { removeAccents(it).uppercase() }
+        val fabricationMaterial = it[12]?.let { removeAccents(it).uppercase() }
+        val relevance = it[13]?.let { removeAccents(it).uppercase() }
 
-        val product = when (category.uppercase()) {
+        val product = when (category) {
             "ROUPA" -> {
-                Clothing(code,name,costPrice,salePrice,category.uppercase(),ClothingType.valueOf(type.uppercase()),Size.valueOf(size!!.uppercase()),primaryColor!!, secundaryColor)
+                Clothing(code,name,costPrice,salePrice,category,ClothingType.valueOf(type),Size.valueOf(size!!),primaryColor!!, secundaryColor)
             }
             "ELETRONICO" -> {
-                Electronic(code,name,costPrice,salePrice,category.uppercase(),ElectronicType.valueOf(type.uppercase().replace("-", "")), version!!, (fabricationYear!!))
+                Electronic(code,name,costPrice,salePrice,category,ElectronicType.valueOf(type.replace("-", "")), version!!, (fabricationYear!!))
             }
             "COLECIONAVEL" -> {
-                Collectible(code,name,costPrice,salePrice,category.uppercase(),CollectibleType.valueOf(type.uppercase()),size,FabricationMaterial.valueOf(fabricationMaterial!!.uppercase()),Relevance.valueOf(relevance!!.uppercase()))
+                Collectible(code,name,costPrice,salePrice,category,CollectibleType.valueOf(type),size,FabricationMaterial.valueOf(fabricationMaterial!!),Relevance.valueOf(relevance!!))
             }
             else -> null
         }
@@ -151,7 +158,7 @@ fun main(args: Array<String>) {
     csvSaleFile.readLines().drop(1).forEach { line ->
         val it = line.split(",")
 
-        val code = it[0]
+        val code = removeAccents(it[0]).uppercase()
         val quantity = it[1].toInt()
         val product = mpProducts[code]
 
@@ -176,10 +183,10 @@ fun main(args: Array<String>) {
 
                 // Apply filters based on the entries
                 if (ent[0] != "-") {
-                    productList = productList.filter { it.category == ent[0].uppercase() }
+                    productList = productList.filter { removeAccents(it.category).uppercase() == removeAccents(ent[0]).uppercase() }
                 }
                 if (ent[1] != "-") {
-                    val entrie = ent[1].uppercase().replace("-", "")
+                    val entrie = removeAccents(ent[1]).uppercase().replace("-", "")
                     if (entrie in ClothingType.values().map { it.name }) {
                         productList = productList.filter { it is Clothing && it.type == ClothingType.valueOf(entrie) }
                     }
