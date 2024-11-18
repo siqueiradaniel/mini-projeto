@@ -1,6 +1,6 @@
 
 
-import com.sun.jdi.IntegerType
+import java.io.File
 
 enum class Category { ROUPA, ELETRONICO, COLECIONAVEL }
 
@@ -71,33 +71,39 @@ class Collectible (
     }
 }
 
-fun main() {
-    val compras = listOf(
-        listOf("CAMYO", 13, "Camisa mestre yoda", 22.35, 41.50, "roupa", "camisa", "GG", "preto", "vermelho", null, null, null, null),
-        listOf("CANMAR", 20, "Caneca do Mario Bros", 12.57, 25.00, "colecionavel", "outros", null, null, null, null, null, "outros", "comum"),
-        listOf("PLAY5", 2, "Playstation 5", 4000.0, 4500.0, "eletronico", "video-game", null, null, null, "1", "2022", null, null),
-        listOf("GOKU1", 5, "Action figure Goku", 35.33, 70.0, "colecionavel", "boneco", "15", null, null, null, null, "plastico", "medio"),
-        listOf("MARKAR", 5, "Jogo mario kart", 189.90, 250.00, "eletronico", "jogo", null, null, null, "2", "2021", null, null),
-        listOf("SANE1", 15, "O senhor dos aneis 1", 35.00, 50.00, "colecionavel", "livro", null, null, null, null, null, "papel", "comum")
-    )
+fun main(args: Array<String>) {
+//    if (args.isEmpty()) {
+//        println("Por favor, forneça o caminho do arquivo CSV como argumento.")
+//        return
+//    }
 
-    val vendas = listOf(
-        listOf("C-CANMAR", 5),
-        listOf("E-PLAY5", 1),
-        listOf("C-GOKU1", 1)
-    )
+//    val csvFilePath = args[0]
+    val csvBuyPath = "C:\\Users\\dsoliveira\\Documents\\Mini-mini\\compras.csv"
+    val csvBuyFile = File(csvBuyPath)
 
-    // Categoria	Tipo	Tamanho	Cor primaria	Cor secundário	Versão	Ano de fabricação	Material de fabricação	Relevância
-    // roupa	-	-	vermelho	-	-	-	-	-
-    // -	boneco	-	-	-	-	-	-	-
-    // -	video-game	-	-	-	-	2022	-	-
+    val csvSalePath = "C:\\Users\\dsoliveira\\Documents\\Mini-mini\\vendas.csv"
+    val csvSaleFile = File(csvSalePath)
 
+    val csvSearchPath = "C:\\Users\\dsoliveira\\Documents\\Mini-mini\\buscas.csv"
+    val csvSearchFile = File(csvSearchPath)
 
-    val buscas: List<List<String>> = listOf(
-        listOf("roupa","-","-","vermelho","-","-","-","-","-"),
-        listOf("-", "boneco","-","-","-","-","-","-","-"),
-        listOf("-", "videogame","-","-","-","-","2022","-","-")
-    )
+    if (!csvBuyFile.exists()) {
+        println("O arquivo especificado não existe: $csvBuyPath")
+        return
+    }
+    if (!csvSaleFile.exists()) {
+        println("O arquivo especificado não existe: $csvSalePath")
+        return
+    }
+    if (!csvSearchFile.exists()) {
+        println("O arquivo especificado não existe: $csvSearchPath")
+        return
+    }
+
+    val csvResultSearchFile = File("C:\\Users\\dsoliveira\\Documents\\Mini-mini\\resultado_busca.csv")
+    val csvGeneralStockFile = File("C:\\Users\\dsoliveira\\Documents\\Mini-mini\\estoque_geral.csv")
+    val csvCategorStockFile = File("C:\\Users\\dsoliveira\\Documents\\Mini-mini\\estoque_categoria.csv")
+    val csvBalanceteFile = File("C:\\Users\\dsoliveira\\Documents\\Mini-mini\\balancete.csv")
 
     val mpProducts = mutableMapOf<String, Product>()
     val mpProductsStock = mutableMapOf<String, Int>()
@@ -105,14 +111,16 @@ fun main() {
     var totalCompra: Double = 0.0
     var totalVenda: Double = 0.0
 
-    compras.forEach {
-        val code = it[0] as String
-        val quantity = it[1] as Int
-        val name = it[2] as String
-        val costPrice = it[3] as Double
-        val salePrice = it[4] as Double
-        val category = it[5] as String
-        val type = it[6] as String
+    csvBuyFile.readLines().drop(1).forEach { line ->
+        val it = line.split(",")
+
+        val code = it[0]
+        val quantity = it[1].toInt()
+        val name = it[2]
+        val costPrice = it[3].toDouble()
+        val salePrice = it[4].toDouble()
+        val category = it[5]
+        val type = it[6]
         val size = it[7] as String?
         val primaryColor = it[8] as String?
         val secundaryColor = it[9] as String?
@@ -142,9 +150,11 @@ fun main() {
         }
     }
 
-    vendas.forEach {
-        val code = it[0] as String
-        val quantity = it[1] as Int
+    csvSaleFile.readLines().drop(1).forEach { line ->
+        val it = line.split(",")
+
+        val code = it[0]
+        val quantity = it[1].toInt()
         val product = mpProducts[code]
 
         if (product != null) {
@@ -154,64 +164,89 @@ fun main() {
         }
     }
 
-    var cont = 1
-    buscas.forEach { ent ->
-        //Categoria	Tipo	Tamanho	Cor primaria	Cor secundário	Versão	Ano de fabricação	Material de fabricação	Relevância
 
+    csvResultSearchFile.printWriter().use { writer ->
+        // Optionally, write a header if needed
+        writer.println("BUSCAS, QUANTIDADE")
 
-        var productList: List<Product> = mpProducts.values.toList()
-        if (ent[0] != "-") {
-            productList = productList.filter { it.category == ent[0].uppercase()}
-        }
-        if (ent[1] != "-") {
-            val entrie = ent[1].uppercase().replace("-", "")
+        // Reading lines from the input CSV file
+        var cont = 1
+        csvSearchFile.readLines().drop(1).forEach { line ->
+            val ent = line.split(",")
 
-            if (entrie in ClothingType.values().map { it.name }) {
-                productList = productList.filter { it is Clothing && it.type == ClothingType.valueOf(entrie) }
+            // Initialize the product list
+            var productList: List<Product> = mpProducts.values.toList()
+
+            // Apply filters based on the entries
+            if (ent[0] != "-") {
+                productList = productList.filter { it.category == ent[0].uppercase() }
             }
-            if (entrie in ElectronicType.values().map {it.name }) {
-                productList = productList.filter { it is Electronic && it.type == ElectronicType.valueOf(entrie) }
+            if (ent[1] != "-") {
+                val entrie = ent[1].uppercase().replace("-", "")
+                if (entrie in ClothingType.values().map { it.name }) {
+                    productList = productList.filter { it is Clothing && it.type == ClothingType.valueOf(entrie) }
+                }
+                if (entrie in ElectronicType.values().map { it.name }) {
+                    productList = productList.filter { it is Electronic && it.type == ElectronicType.valueOf(entrie) }
+                }
+                if (entrie in CollectibleType.values().map { it.name }) {
+                    productList = productList.filter { it is Collectible && it.type == CollectibleType.valueOf(entrie) }
+                }
             }
-            if (entrie in CollectibleType.values().map { it.name }) {
-                productList = productList.filter { it is Collectible && it.type == CollectibleType.valueOf(entrie) }
+            if (ent[2] != "-") {
+                productList = productList.filter { it is Collectible && it.size == ent[2] }
             }
-        }
-        if (ent[2] != "-") {
-            productList = productList.filter { it is Collectible && it.size == ent[2]}
-        }
-        if (ent[3] != "-") {
-            productList = productList.filter { it is Clothing && it.primaryColor == ent[3]}
-        }
-        if (ent[4] != "-") {
-            productList = productList.filter { it is Clothing && it.secundaryColor == ent[4]}
-        }
-        if (ent[5] != "-") {
-            productList = productList.filter { it is Electronic && it.version == ent[5]}
-        }
-        if (ent[6] != "-") {
-            productList = productList.filter { it is Electronic && it.fabricationYear == ent[6] }
-        }
-        if (ent[7] != "-") {
-            productList = productList.filter { it is Collectible && it.fabricationMaterial.name == ent[7].uppercase()}
-        }
-        if (ent[8] != "-") {
-            productList = productList.filter { it is Collectible && it.relevance.name == ent[8].uppercase()}
-        }
+            if (ent[3] != "-") {
+                productList = productList.filter { it is Clothing && it.primaryColor == ent[3] }
+            }
+            if (ent[4] != "-") {
+                productList = productList.filter { it is Clothing && it.secundaryColor == ent[4] }
+            }
+            if (ent[5] != "-") {
+                productList = productList.filter { it is Electronic && it.version == ent[5] }
+            }
+            if (ent[6] != "-") {
+                productList = productList.filter { it is Electronic && it.fabricationYear == ent[6] }
+            }
+            if (ent[7] != "-") {
+                productList = productList.filter { it is Collectible && it.fabricationMaterial.name == ent[7].uppercase() }
+            }
+            if (ent[8] != "-") {
+                productList = productList.filter { it is Collectible && it.relevance.name == ent[8].uppercase() }
+            }
 
-        val totalQuantity = productList.sumOf { mpProductsStock[it.code]!! }
-        println("$cont: ${totalQuantity}")
-        cont += 1
+            // Calculate the total quantity for the filtered products
+            val totalQuantity = productList.sumOf { mpProductsStock[it.code]!! }
+
+            // Write the result to the CSV file (Index, Total Quantity)
+            writer.println("$cont, $totalQuantity")
+            cont += 1
+        }
     }
 
-    for(product in mpProducts.values) {
-        println("${product.code}, ${product.name}, ${mpProductsStock[product.code]}")
+    csvGeneralStockFile.printWriter().use { writer ->
+        // Optionally, write a header if needed
+        writer.println("CODIGO, NOME, QUANTIDADE")
+
+        for (product in mpProducts.values) {
+            writer.println("${product.code}, ${product.name}, ${mpProductsStock[product.code]}")
+        }
     }
-    for(category in Category.values()) {
-        println("${category}: ${mpCategoryStock[category.name]}")
+
+    csvCategorStockFile.printWriter().use { writer ->
+        // Optionally, write a header if needed
+        writer.println("CATEGORIA, QUANTIDADE")
+
+        for (category in Category.values()) {
+            writer.println("${category}: ${mpCategoryStock[category.name]}")
+        }
     }
-    println("Compra: $totalCompra")
-    println("Venda: $totalVenda")
-    println("Balancete: ${totalVenda - totalCompra}")
+
+    csvBalanceteFile.printWriter().use { writer ->
+        writer.println("COMPRAS, $totalCompra")
+        writer.println("VENDAS, $totalVenda")
+        writer.println("BALANCETE, ${totalVenda - totalCompra}")
+    }
 }
 
 
