@@ -72,19 +72,21 @@ class Collectible (
 }
 
 fun main(args: Array<String>) {
-//    if (args.isEmpty()) {
-//        println("Por favor, forneça o caminho do arquivo CSV como argumento.")
-//        return
-//    }
+    if (args.isEmpty()) {
+        println("Por favor, forneça o caminho do arquivo CSV como argumento.")
+        return
+    }
 
-//    val csvFilePath = args[0]
-    val csvBuyPath = "C:\\Users\\dsoliveira\\Documents\\Mini-mini\\compras.csv"
+    val inPath = args[0]
+    val outPath = args[1]
+
+    val csvBuyPath = inPath + "compras.csv"
     val csvBuyFile = File(csvBuyPath)
 
-    val csvSalePath = "C:\\Users\\dsoliveira\\Documents\\Mini-mini\\vendas.csv"
+    val csvSalePath = inPath + "vendas.csv"
     val csvSaleFile = File(csvSalePath)
 
-    val csvSearchPath = "C:\\Users\\dsoliveira\\Documents\\Mini-mini\\buscas.csv"
+    val csvSearchPath = inPath + "buscas.csv"
     val csvSearchFile = File(csvSearchPath)
 
     if (!csvBuyFile.exists()) {
@@ -95,15 +97,11 @@ fun main(args: Array<String>) {
         println("O arquivo especificado não existe: $csvSalePath")
         return
     }
-    if (!csvSearchFile.exists()) {
-        println("O arquivo especificado não existe: $csvSearchPath")
-        return
-    }
 
-    val csvResultSearchFile = File("C:\\Users\\dsoliveira\\Documents\\Mini-mini\\resultado_busca.csv")
-    val csvGeneralStockFile = File("C:\\Users\\dsoliveira\\Documents\\Mini-mini\\estoque_geral.csv")
-    val csvCategorStockFile = File("C:\\Users\\dsoliveira\\Documents\\Mini-mini\\estoque_categoria.csv")
-    val csvBalanceteFile = File("C:\\Users\\dsoliveira\\Documents\\Mini-mini\\balancete.csv")
+    val csvResultSearchFile = File(outPath + "resultado_busca.csv")
+    val csvGeneralStockFile = File(outPath + "estoque_geral.csv")
+    val csvCategorStockFile = File(outPath + "estoque_categoria.csv")
+    val csvBalanceteFile = File(outPath + "balancete.csv")
 
     val mpProducts = mutableMapOf<String, Product>()
     val mpProductsStock = mutableMapOf<String, Int>()
@@ -165,67 +163,68 @@ fun main(args: Array<String>) {
     }
 
 
-    csvResultSearchFile.printWriter().use { writer ->
-        // Optionally, write a header if needed
-        writer.println("BUSCAS, QUANTIDADE")
+    if (csvSearchFile.exists()) {
+        csvResultSearchFile.printWriter().use { writer ->
+            writer.println("BUSCAS, QUANTIDADE")
 
-        // Reading lines from the input CSV file
-        var cont = 1
-        csvSearchFile.readLines().drop(1).forEach { line ->
-            val ent = line.split(",")
+            var cont = 1
+            csvSearchFile.readLines().drop(1).forEach { line ->
+                val ent = line.split(",")
 
-            // Initialize the product list
-            var productList: List<Product> = mpProducts.values.toList()
+                // Initialize the product list
+                var productList: List<Product> = mpProducts.values.toList()
 
-            // Apply filters based on the entries
-            if (ent[0] != "-") {
-                productList = productList.filter { it.category == ent[0].uppercase() }
-            }
-            if (ent[1] != "-") {
-                val entrie = ent[1].uppercase().replace("-", "")
-                if (entrie in ClothingType.values().map { it.name }) {
-                    productList = productList.filter { it is Clothing && it.type == ClothingType.valueOf(entrie) }
+                // Apply filters based on the entries
+                if (ent[0] != "-") {
+                    productList = productList.filter { it.category == ent[0].uppercase() }
                 }
-                if (entrie in ElectronicType.values().map { it.name }) {
-                    productList = productList.filter { it is Electronic && it.type == ElectronicType.valueOf(entrie) }
+                if (ent[1] != "-") {
+                    val entrie = ent[1].uppercase().replace("-", "")
+                    if (entrie in ClothingType.values().map { it.name }) {
+                        productList = productList.filter { it is Clothing && it.type == ClothingType.valueOf(entrie) }
+                    }
+                    if (entrie in ElectronicType.values().map { it.name }) {
+                        productList =
+                            productList.filter { it is Electronic && it.type == ElectronicType.valueOf(entrie) }
+                    }
+                    if (entrie in CollectibleType.values().map { it.name }) {
+                        productList =
+                            productList.filter { it is Collectible && it.type == CollectibleType.valueOf(entrie) }
+                    }
                 }
-                if (entrie in CollectibleType.values().map { it.name }) {
-                    productList = productList.filter { it is Collectible && it.type == CollectibleType.valueOf(entrie) }
+                if (ent[2] != "-") {
+                    productList = productList.filter { it is Collectible && it.size == ent[2] }
                 }
-            }
-            if (ent[2] != "-") {
-                productList = productList.filter { it is Collectible && it.size == ent[2] }
-            }
-            if (ent[3] != "-") {
-                productList = productList.filter { it is Clothing && it.primaryColor == ent[3] }
-            }
-            if (ent[4] != "-") {
-                productList = productList.filter { it is Clothing && it.secundaryColor == ent[4] }
-            }
-            if (ent[5] != "-") {
-                productList = productList.filter { it is Electronic && it.version == ent[5] }
-            }
-            if (ent[6] != "-") {
-                productList = productList.filter { it is Electronic && it.fabricationYear == ent[6] }
-            }
-            if (ent[7] != "-") {
-                productList = productList.filter { it is Collectible && it.fabricationMaterial.name == ent[7].uppercase() }
-            }
-            if (ent[8] != "-") {
-                productList = productList.filter { it is Collectible && it.relevance.name == ent[8].uppercase() }
-            }
+                if (ent[3] != "-") {
+                    productList = productList.filter { it is Clothing && it.primaryColor == ent[3] }
+                }
+                if (ent[4] != "-") {
+                    productList = productList.filter { it is Clothing && it.secundaryColor == ent[4] }
+                }
+                if (ent[5] != "-") {
+                    productList = productList.filter { it is Electronic && it.version == ent[5] }
+                }
+                if (ent[6] != "-") {
+                    productList = productList.filter { it is Electronic && it.fabricationYear == ent[6] }
+                }
+                if (ent[7] != "-") {
+                    productList =
+                        productList.filter { it is Collectible && it.fabricationMaterial.name == ent[7].uppercase() }
+                }
+                if (ent[8] != "-") {
+                    productList = productList.filter { it is Collectible && it.relevance.name == ent[8].uppercase() }
+                }
 
-            // Calculate the total quantity for the filtered products
-            val totalQuantity = productList.sumOf { mpProductsStock[it.code]!! }
+                // Calculate the total quantity for the filtered products
+                val totalQuantity = productList.sumOf { mpProductsStock[it.code]!! }
 
-            // Write the result to the CSV file (Index, Total Quantity)
-            writer.println("$cont, $totalQuantity")
-            cont += 1
+                writer.println("$cont, $totalQuantity")
+                cont += 1
+            }
         }
     }
 
     csvGeneralStockFile.printWriter().use { writer ->
-        // Optionally, write a header if needed
         writer.println("CODIGO, NOME, QUANTIDADE")
 
         for (product in mpProducts.values) {
@@ -234,7 +233,6 @@ fun main(args: Array<String>) {
     }
 
     csvCategorStockFile.printWriter().use { writer ->
-        // Optionally, write a header if needed
         writer.println("CATEGORIA, QUANTIDADE")
 
         for (category in Category.values()) {
