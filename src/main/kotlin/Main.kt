@@ -93,7 +93,7 @@ fun main(args: Array<String>) {
     val csvSalePath = inPath + "vendas.csv"
     val csvSaleFile = File(csvSalePath)
 
-    val csvSearchPath = inPath + "buscas.csv"
+    val csvSearchPath = inPath + "busca.csv"
     val csvSearchFile = File(csvSearchPath)
 
     if (!csvBuyFile.exists()) {
@@ -107,7 +107,7 @@ fun main(args: Array<String>) {
 
     val csvResultSearchFile = File(outPath + "resultado_busca.csv")
     val csvGeneralStockFile = File(outPath + "estoque_geral.csv")
-    val csvCategorStockFile = File(outPath + "estoque_categoria.csv")
+    val csvCategorStockFile = File(outPath + "estoque_categorias.csv")
     val csvBalanceteFile = File(outPath + "balancete.csv")
 
     val mpProducts = mutableMapOf<String, Product>()
